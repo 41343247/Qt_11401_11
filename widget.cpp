@@ -1,5 +1,8 @@
 #include "widget.h"
 
+// Multi-Layer Minesweeper - Enhanced Edition
+// Features: Layer colors, visual feedback, modern UI
+
 Widget::Widget(QWidget *parent) : QWidget(parent)
 {
     // Initialize sound effects with embedded data URLs (simple beep sounds)
