@@ -1,4 +1,5 @@
 #include "widget.h"
+#include <QApplication>
 
 // Multi-Layer Minesweeper - Enhanced Edition
 // Features: Layer colors, visual feedback, modern UI
