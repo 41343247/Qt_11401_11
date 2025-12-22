@@ -14,6 +14,8 @@
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QRandomGenerator>
+#include <QSoundEffect>
+#include <QPropertyAnimation>
 
 // 每個格子的資料結構
 struct Cell {
@@ -79,6 +81,10 @@ private:
     QTimer *timer;
     int elapsedSeconds = 0;
 
+    // Sound effects
+    QSoundEffect *revealSound;
+    QSoundEffect *explosionSound;
+
     // game model
     QVector<QVector<QVector<Cell>>> board; // [layer][row][col]
     int rows = 8;
@@ -103,6 +109,8 @@ private:
     void updateButtonVisual(int layer, int r, int c);
     void updateMineLabel();
     void checkWinCondition();
+    QColor getLayerColor(int layer, bool revealed) const;
+    void showExplosionEffect(int r, int c);
 };
 
 #endif // WIDGET_H
