@@ -1,19 +1,7 @@
 #include "widget.h"
 
-// Multi-Layer Minesweeper - Enhanced Edition
-// Features: Layer colors, visual feedback, modern UI
-
 Widget::Widget(QWidget *parent) : QWidget(parent)
 {
-    // Initialize sound effects with embedded data URLs (simple beep sounds)
-    revealSound = new QSoundEffect(this);
-    explosionSound = new QSoundEffect(this);
-    
-    // We'll use simple tones - Qt can generate these or use resource files
-    // For now, we'll set them up and check if files exist later
-    revealSound->setVolume(0.5);
-    explosionSound->setVolume(0.7);
-    
     buildUI();
     newGame();
 }
@@ -24,41 +12,28 @@ Widget::~Widget()
 
 void Widget::buildUI()
 {
-    // Set window properties
-    setWindowTitle("Multi-Layer Minesweeper");
-    setStyleSheet("QWidget { background-color: #2b2b2b; color: #ffffff; font-family: Arial; }");
-    
     // Top controls
     QLabel *lblRows = new QLabel("Rows:");
-    lblRows->setStyleSheet("font-weight: bold;");
     spinRows = new QSpinBox(this);
     spinRows->setRange(5, 20);
     spinRows->setValue(rows);
-    spinRows->setStyleSheet("QSpinBox { background-color: #3c3c3c; color: #ffffff; border: 1px solid #555; padding: 3px; }");
 
     QLabel *lblCols = new QLabel("Cols:");
-    lblCols->setStyleSheet("font-weight: bold;");
     spinCols = new QSpinBox(this);
     spinCols->setRange(5, 20);
     spinCols->setValue(cols);
-    spinCols->setStyleSheet("QSpinBox { background-color: #3c3c3c; color: #ffffff; border: 1px solid #555; padding: 3px; }");
 
     QLabel *lblLayers = new QLabel("Layers:");
-    lblLayers->setStyleSheet("font-weight: bold;");
     spinLayers = new QSpinBox(this);
     spinLayers->setRange(1, 10);
     spinLayers->setValue(layers);
-    spinLayers->setStyleSheet("QSpinBox { background-color: #3c3c3c; color: #ffffff; border: 1px solid #555; padding: 3px; }");
 
     QLabel *lblMines = new QLabel("Mines:");
-    lblMines->setStyleSheet("font-weight: bold;");
     spinMines = new QSpinBox(this);
     spinMines->setRange(1, 200);
     spinMines->setValue(mineCount);
-    spinMines->setStyleSheet("QSpinBox { background-color: #3c3c3c; color: #ffffff; border: 1px solid #555; padding: 3px; }");
 
     newGameBtn = new QPushButton("New Game", this);
-    newGameBtn->setStyleSheet("QPushButton { background-color: #4CAF50; color: white; border: none; padding: 5px 15px; font-weight: bold; border-radius: 3px; } QPushButton:hover { background-color: #45a049; }");
     connect(newGameBtn, &QPushButton::clicked, this, &Widget::newGame);
 
     QHBoxLayout *ctrlLayout = new QHBoxLayout();
@@ -74,11 +49,8 @@ void Widget::buildUI()
 
     // Layer controls
     prevBtn = new QPushButton("上一層", this);
-    prevBtn->setStyleSheet("QPushButton { background-color: #555; color: white; border: none; padding: 5px 10px; font-weight: bold; border-radius: 3px; } QPushButton:hover { background-color: #666; }");
     nextBtn = new QPushButton("下一層", this);
-    nextBtn->setStyleSheet("QPushButton { background-color: #555; color: white; border: none; padding: 5px 10px; font-weight: bold; border-radius: 3px; } QPushButton:hover { background-color: #666; }");
     layerBox = new QComboBox(this);
-    layerBox->setStyleSheet("QComboBox { background-color: #3c3c3c; color: #ffffff; border: 1px solid #555; padding: 3px; } QComboBox::drop-down { border: none; } QComboBox::down-arrow { image: none; border: none; }");
     connect(prevBtn, &QPushButton::clicked, this, &Widget::prevLayer);
     connect(nextBtn, &QPushButton::clicked, this, &Widget::nextLayer);
     connect(layerBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -91,9 +63,7 @@ void Widget::buildUI()
 
     // Info
     mineLabel = new QLabel("Mines: 0", this);
-    mineLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #FFD700;");
     timeLabel = new QLabel("Time: 0", this);
-    timeLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #87CEEB;");
 
     QHBoxLayout *infoLayout = new QHBoxLayout();
     infoLayout->addWidget(mineLabel);
@@ -115,7 +85,6 @@ void Widget::buildUI()
     main->addLayout(layerLayout);
     main->addLayout(infoLayout);
     main->addLayout(boardLayout);
-    main->setContentsMargins(10, 10, 10, 10);
     setLayout(main);
 }
 
@@ -185,11 +154,6 @@ void Widget::buildBoardButtons()
             btn->setFixedSize(btnSize, btnSize);
             btn->setText(""); // 初始不顯示任何文字
             btn->setFocusPolicy(Qt::NoFocus);
-            
-            // Apply layer-specific color
-            QColor layerColor = getLayerColor(currentLayer, false);
-            btn->setStyleSheet(QString("QPushButton { background-color: %1; color: #ffffff; border: 1px solid #000; font-weight: bold; font-size: 12px; } QPushButton:hover { border: 2px solid #fff; }").arg(layerColor.name()));
-            
             boardLayout->addWidget(btn, r, c);
             buttonGrid[r][c] = btn;
 
@@ -286,17 +250,6 @@ void Widget::onLeftClick(int r, int c)
 
     // 若踩到地雷 -> game over
     if (cell.isMine) {
-        // Play explosion sound
-        if (explosionSound->source().isEmpty()) {
-            // Generate a simple beep sound using system beep
-            QApplication::beep();
-        } else {
-            explosionSound->play();
-        }
-        
-        // Show explosion effect
-        showExplosionEffect(r, c);
-        
         // 顯示所有地雷
         for (int l = 0; l < layers; ++l)
             for (int rr = 0; rr < rows; ++rr)
@@ -308,21 +261,10 @@ void Widget::onLeftClick(int r, int c)
                 }
         gameOver = true;
         timer->stop();
-        
-        // Show game over message with explosion icon
-        QMessageBox msgBox(this);
-        msgBox.setWindowTitle("💥 Game Over 💥");
-        msgBox.setText("<h2 style='color: #ff0000;'>💣 BOOM! 💣</h2><p>You clicked a mine! Game Over.</p>");
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setStyleSheet("QMessageBox { background-color: #2b2b2b; } QLabel { color: #ffffff; } QPushButton { background-color: #555; color: white; padding: 5px 15px; border-radius: 3px; }");
-        msgBox.exec();
+        QMessageBox::critical(this, "Game Over", "You clicked a mine! Game Over.");
         return;
     }
 
-    // Play reveal sound - use a simple notification
-    // Since we don't have sound files, we use visual feedback instead
-    // A proper implementation would load .wav files using QSoundEffect::setSource()
-    
     // 揭露格子
     revealCell(currentLayer, r, c);
     updateButtonVisual(currentLayer, r, c);
@@ -393,39 +335,17 @@ void Widget::updateButtonVisual(int layer, int r, int c)
     CellButton *btn = buttonGrid[r][c];
     if (!btn) return;
 
-    QColor layerColor = getLayerColor(layer, cell.revealed);
-    QString baseStyle = QString("QPushButton { background-color: %1; color: %2; border: 1px solid #000; font-weight: bold; font-size: 12px; }")
-                        .arg(layerColor.name())
-                        .arg(cell.revealed ? "#000000" : "#ffffff");
-
     if (cell.revealed) {
         btn->setEnabled(false);
         if (cell.isMine) {
             btn->setText("💣");
-            btn->setStyleSheet(baseStyle + " QPushButton { font-size: 18px; }");
         } else if (cell.adj > 0) {
             btn->setText(QString::number(cell.adj));
-            // Different colors for different numbers
-            QString numColor;
-            switch (cell.adj) {
-                case 1: numColor = "#0000FF"; break;
-                case 2: numColor = "#008000"; break;
-                case 3: numColor = "#FF0000"; break;
-                case 4: numColor = "#000080"; break;
-                case 5: numColor = "#800000"; break;
-                case 6: numColor = "#008080"; break;
-                case 7: numColor = "#000000"; break;
-                case 8: numColor = "#808080"; break;
-                default: numColor = "#000000"; break;
-            }
-            btn->setStyleSheet(baseStyle.replace("#000000", numColor));
         } else {
             btn->setText("");
-            btn->setStyleSheet(baseStyle);
         }
     } else {
         btn->setEnabled(true);
-        btn->setStyleSheet(baseStyle + " QPushButton:hover { border: 2px solid #fff; }");
         if (cell.flagged) btn->setText("⚑");
         else btn->setText("");
     }
@@ -484,12 +404,7 @@ void Widget::checkWinCondition()
     if (revealedCells == totalCells - mineCount) {
         gameOver = true;
         timer->stop();
-        QMessageBox msgBox(this);
-        msgBox.setWindowTitle("🎉 Victory! 🎉");
-        msgBox.setText(QString("<h2 style='color: #00ff00;'>🏆 Congratulations! 🏆</h2><p>You cleared the field in %1 seconds.</p>").arg(elapsedSeconds));
-        msgBox.setIcon(QMessageBox::Information);
-        msgBox.setStyleSheet("QMessageBox { background-color: #2b2b2b; } QLabel { color: #ffffff; } QPushButton { background-color: #4CAF50; color: white; padding: 5px 15px; border-radius: 3px; }");
-        msgBox.exec();
+        QMessageBox::information(this, "You Win", QString("Congratulations! You cleared the field in %1 seconds.").arg(elapsedSeconds));
     } else {
         // also optional: if all mines flagged correctly -> win
         // check if number of flagged == mineCount and all flagged are mines
@@ -505,55 +420,7 @@ void Widget::checkWinCondition()
         if (flagged == mineCount && correctFlags == mineCount) {
             gameOver = true;
             timer->stop();
-            QMessageBox msgBox(this);
-            msgBox.setWindowTitle("🎉 Victory! 🎉");
-            msgBox.setText(QString("<h2 style='color: #00ff00;'>🏆 All mines flagged correctly! 🏆</h2><p>Time: %1 seconds.</p>").arg(elapsedSeconds));
-            msgBox.setIcon(QMessageBox::Information);
-            msgBox.setStyleSheet("QMessageBox { background-color: #2b2b2b; } QLabel { color: #ffffff; } QPushButton { background-color: #4CAF50; color: white; padding: 5px 15px; border-radius: 3px; }");
-            msgBox.exec();
+            QMessageBox::information(this, "You Win", QString("All mines flagged correctly! Time: %1 s.").arg(elapsedSeconds));
         }
     }
-}
-
-QColor Widget::getLayerColor(int layer, bool revealed) const
-{
-    // Generate different colors for each layer
-    // Darker for unrevealed, lighter for revealed
-    const QVector<QColor> layerBaseColors = {
-        QColor(70, 130, 180),   // Steel Blue - Layer 0
-        QColor(160, 82, 45),    // Sienna - Layer 1
-        QColor(85, 107, 47),    // Dark Olive Green - Layer 2
-        QColor(139, 69, 19),    // Saddle Brown - Layer 3
-        QColor(72, 61, 139),    // Dark Slate Blue - Layer 4
-        QColor(47, 79, 79),     // Dark Slate Gray - Layer 5
-        QColor(128, 0, 0),      // Maroon - Layer 6
-        QColor(0, 100, 0),      // Dark Green - Layer 7
-        QColor(75, 0, 130),     // Indigo - Layer 8
-        QColor(105, 105, 105)   // Dim Gray - Layer 9
-    };
-    
-    int colorIndex = layer % layerBaseColors.size();
-    QColor baseColor = layerBaseColors[colorIndex];
-    
-    if (revealed) {
-        // Lighter version for revealed cells
-        return baseColor.lighter(180);
-    } else {
-        // Darker version for unrevealed cells
-        return baseColor.darker(120);
-    }
-}
-
-void Widget::showExplosionEffect(int r, int c)
-{
-    // Visual feedback: make the button flash with explosion animation
-    CellButton *btn = buttonGrid[r][c];
-    if (!btn) return;
-    
-    // Create a simple animation effect by changing background color
-    btn->setStyleSheet("QPushButton { background-color: #ff0000; color: #ffffff; border: 3px solid #ffff00; font-size: 20px; }");
-    btn->setText("💥");
-    
-    // Force UI update
-    QApplication::processEvents();
 }
