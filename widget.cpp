@@ -508,7 +508,7 @@ void Widget::checkWinCondition()
             timer->stop();
             QMessageBox msgBox(this);
             msgBox.setWindowTitle("🎉 Victory! 🎉");
-            msgBox.setText(QString("<h2 style='color: #00ff00;'>🏆 All mines flagged correctly! 🏆</h2><p>Time: %1 seconds.</p>").arg(elapsedSeconds));
+            msgBox.setText(QString("<h2 style='color: #00ff00;'>🏆 已標示所有地雷! 🏆</h2><p>Time: %1 seconds.</p>").arg(elapsedSeconds));
             msgBox.setIcon(QMessageBox::Information);
             msgBox.setStyleSheet("QMessageBox { background-color: #2b2b2b; } QLabel { color: #ffffff; } QPushButton { background-color: #4CAF50; color: white; padding: 5px 15px; border-radius: 3px; }");
             msgBox.exec();
