@@ -316,14 +316,10 @@ void Widget::onLeftClick(int r, int c)
         return;
     }
 
-    // Play reveal sound
-    if (revealSound->source().isEmpty()) {
-        // Simple system beep as fallback
-        // We'll just skip sound if no file is loaded
-    } else {
-        revealSound->play();
-    }
-
+    // Play reveal sound - use a simple notification
+    // Since we don't have sound files, we use visual feedback instead
+    // A proper implementation would load .wav files using QSoundEffect::setSource()
+    
     // 揭露格子
     revealCell(currentLayer, r, c);
     updateButtonVisual(currentLayer, r, c);
