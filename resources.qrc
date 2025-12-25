@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>sounds/boom.wav</file>
+    </qresource>
+</RCC>

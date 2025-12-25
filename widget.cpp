@@ -11,6 +11,11 @@ Widget::Widget(QWidget *parent) : QWidget(parent)
     revealSound->setVolume(0.5);
     explosionSound->setVolume(0.7);
 
+    explosionSound = new QSoundEffect(this);
+    explosionSound->setSource(QUrl("qrc:/sounds/boom.wav"));
+    explosionSound->setVolume(0.7);
+
+
     buildUI();
     newGame();
 }
