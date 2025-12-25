@@ -1,20 +1,16 @@
 #include "widget.h"
 #include <QApplication>
 
-// Multi-Layer Minesweeper - Enhanced Edition
-// Features: Layer colors, visual feedback, modern UI
-
 Widget::Widget(QWidget *parent) : QWidget(parent)
 {
-    // Initialize sound effects with embedded data URLs (simple beep sounds)
+    // 初始化音效，使用嵌入的資料 URL（簡單的嗶聲）
     revealSound = new QSoundEffect(this);
     explosionSound = new QSoundEffect(this);
-    
-    // We'll use simple tones - Qt can generate these or use resource files
-    // For now, we'll set them up and check if files exist later
+
+    // 設定音量
     revealSound->setVolume(0.5);
     explosionSound->setVolume(0.7);
-    
+
     buildUI();
     newGame();
 }
@@ -25,11 +21,11 @@ Widget::~Widget()
 
 void Widget::buildUI()
 {
-    // Set window properties
+    // 設定視窗屬性
     setWindowTitle("Multi-Layer Minesweeper");
     setStyleSheet("QWidget { background-color: #2b2b2b; color: #ffffff; font-family: Arial; }");
-    
-    // Top controls
+
+    // 上方控制項
     QLabel *lblRows = new QLabel("Rows:");
     lblRows->setStyleSheet("font-weight: bold;");
     spinRows = new QSpinBox(this);
@@ -73,7 +69,7 @@ void Widget::buildUI()
     ctrlLayout->addWidget(spinMines);
     ctrlLayout->addWidget(newGameBtn);
 
-    // Layer controls
+    // 層控制
     prevBtn = new QPushButton("上一層", this);
     prevBtn->setStyleSheet("QPushButton { background-color: #555; color: white; border: none; padding: 5px 10px; font-weight: bold; border-radius: 3px; } QPushButton:hover { background-color: #666; }");
     nextBtn = new QPushButton("下一層", this);
@@ -90,7 +86,7 @@ void Widget::buildUI()
     layerLayout->addWidget(layerBox);
     layerLayout->addWidget(nextBtn);
 
-    // Info
+    // 資訊顯示
     mineLabel = new QLabel("Mines: 0", this);
     mineLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #FFD700;");
     timeLabel = new QLabel("Time: 0", this);
@@ -101,16 +97,16 @@ void Widget::buildUI()
     infoLayout->addStretch();
     infoLayout->addWidget(timeLabel);
 
-    // Board area
+    // 棋盤區域
     boardLayout = new QGridLayout();
     boardLayout->setSpacing(2);
 
-    // Timer
+    // 計時器
     timer = new QTimer(this);
     timer->setInterval(1000);
     connect(timer, &QTimer::timeout, this, &Widget::onTimerTick);
 
-    // Main layout
+    // 主版面配置
     QVBoxLayout *main = new QVBoxLayout(this);
     main->addLayout(ctrlLayout);
     main->addLayout(layerLayout);
@@ -122,7 +118,7 @@ void Widget::buildUI()
 
 void Widget::newGame()
 {
-    // read UI settings
+    // 讀取 UI 設定
     rows = spinRows->value();
     cols = spinCols->value();
     layers = spinLayers->value();
@@ -133,7 +129,7 @@ void Widget::newGame()
         return;
     }
 
-    // reset state
+    // 重設遊戲狀態
     firstClick = true;
     gameOver = false;
     revealedCells = 0;
@@ -141,22 +137,23 @@ void Widget::newGame()
     timer->stop();
     timeLabel->setText("Time: 0");
 
-    // model reset
+    // 重建層選擇器
     resetModel();
 
-    // rebuild layer selector
+    // 建立棋盤按鈕
     layerBox->clear();
     for (int l = 0; l < layers; ++l) layerBox->addItem(QString("Layer %1").arg(l+1));
     currentLayer = 0;
     layerBox->setCurrentIndex(currentLayer);
 
-    // build UI buttons
+    // 建立 UI 按鈕
     clearBoardButtons();
     buildBoardButtons();
 
     updateMineLabel();
 }
 
+// 重設遊戲模型（建立多層棋盤）
 void Widget::resetModel()
 {
     board.clear();
@@ -174,11 +171,12 @@ void Widget::resetModel()
 
 void Widget::buildBoardButtons()
 {
-    // create button grid for current layer (buttons are recreated but share signal to model)
+    // 建立當前層的按鈕格子（重新建立但共用訊號）
     buttonGrid.clear();
     buttonGrid.resize(rows);
     const int btnSize = 36;
 
+    // 套用層顏色
     for (int r = 0; r < rows; ++r) {
         buttonGrid[r].resize(cols);
         for (int c = 0; c < cols; ++c) {
@@ -186,11 +184,11 @@ void Widget::buildBoardButtons()
             btn->setFixedSize(btnSize, btnSize);
             btn->setText(""); // 初始不顯示任何文字
             btn->setFocusPolicy(Qt::NoFocus);
-            
+
             // Apply layer-specific color
             QColor layerColor = getLayerColor(currentLayer, false);
             btn->setStyleSheet(QString("QPushButton { background-color: %1; color: #ffffff; border: 1px solid #000; font-weight: bold; font-size: 12px; } QPushButton:hover { border: 2px solid #fff; }").arg(layerColor.name()));
-            
+
             boardLayout->addWidget(btn, r, c);
             buttonGrid[r][c] = btn;
 
@@ -200,6 +198,7 @@ void Widget::buildBoardButtons()
     }
 }
 
+// 清除棋盤上的按鈕
 void Widget::clearBoardButtons()
 {
     QLayoutItem *it;
@@ -215,7 +214,7 @@ void Widget::clearBoardButtons()
 
 void Widget::placeMinesSafely(int safeLayer, int safeR, int safeC)
 {
-    // 隨機放置 mines，但避開 safe cell (safeLayer,safeR,safeC) 以及其鄰近格（保守處理）
+    // 隨機放置地雷，但避開安全格（第一次點擊的格子及其鄰近格）
     QVector<int> idxs;
     const int total = layers * rows * cols;
     idxs.reserve(total);
@@ -245,6 +244,7 @@ void Widget::placeMinesSafely(int safeLayer, int safeR, int safeC)
     }
 }
 
+// 計算每個格子的鄰近地雷數
 void Widget::calculateAdjacents()
 {
     for (int l = 0; l < layers; ++l) {
@@ -265,17 +265,19 @@ void Widget::calculateAdjacents()
     }
 }
 
+// 檢查是否在棋盤範圍內
 bool Widget::inBounds(int l, int r, int c) const {
     return l >= 0 && l < layers && r >= 0 && r < rows && c >= 0 && c < cols;
 }
 
+// 左鍵點擊事件
 void Widget::onLeftClick(int r, int c)
 {
     if (gameOver) return;
     if (!inBounds(currentLayer, r, c)) return;
 
     if (firstClick) {
-        // 第一次點擊：先放地雷（避開該格周圍），再計算 adj
+        // 第一次點擊：放置地雷並計算鄰近數
         placeMinesSafely(currentLayer, r, c);
         calculateAdjacents();
         firstClick = false;
@@ -285,19 +287,18 @@ void Widget::onLeftClick(int r, int c)
     Cell &cell = board[currentLayer][r][c];
     if (cell.flagged || cell.revealed) return;
 
-    // 若踩到地雷 -> game over
+    // 第一次點擊：放置地雷並計算鄰近數
     if (cell.isMine) {
-        // Play explosion sound
+        // 播放爆炸音效
         if (explosionSound->source().isEmpty()) {
-            // Generate a simple beep sound using system beep
             QApplication::beep();
         } else {
             explosionSound->play();
         }
-        
-        // Show explosion effect
+
+        // 顯示爆炸
         showExplosionEffect(r, c);
-        
+
         // 顯示所有地雷
         for (int l = 0; l < layers; ++l)
             for (int rr = 0; rr < rows; ++rr)
@@ -309,32 +310,30 @@ void Widget::onLeftClick(int r, int c)
                 }
         gameOver = true;
         timer->stop();
-        
-        // Show game over message with explosion icon
+
+        // 顯示遊戲結束訊息
         QMessageBox msgBox(this);
         msgBox.setWindowTitle("💥 Game Over 💥");
-        msgBox.setText("<h2 style='color: #ff0000;'>💣 BOOM! 💣</h2><p>You clicked a mine! Game Over.</p>");
+        msgBox.setText("<h2 style='color: #ff0000;'>💣 BOOM! 💣</h2><p>你點擊到了炸彈!</p>");
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setStyleSheet("QMessageBox { background-color: #2b2b2b; } QLabel { color: #ffffff; } QPushButton { background-color: #555; color: white; padding: 5px 15px; border-radius: 3px; }");
         msgBox.exec();
         return;
     }
 
-    // Play reveal sound - use a simple notification
-    // Since we don't have sound files, we use visual feedback instead
-    // A proper implementation would load .wav files using QSoundEffect::setSource()
-    
     // 揭露格子
     revealCell(currentLayer, r, c);
     updateButtonVisual(currentLayer, r, c);
     checkWinCondition();
 }
 
+// 右鍵點擊事件
 void Widget::onRightClick(int r, int c)
 {
     if (gameOver || firstClick) return;
     if (!inBounds(currentLayer, r, c)) return;
     Cell &cell = board[currentLayer][r][c];
+    // 插旗或取消旗標
     if (cell.revealed) return;
     cell.flagged = !cell.flagged;
     updateButtonVisual(currentLayer, r, c);
@@ -342,13 +341,15 @@ void Widget::onRightClick(int r, int c)
     checkWinCondition();
 }
 
+// 揭露格子
 void Widget::revealCell(int layer, int r, int c)
 {
     Cell &cell = board[layer][r][c];
     if (cell.revealed || cell.flagged) return;
+    // 若鄰近地雷數為 0，則展開鄰近格
     cell.revealed = true;
     revealedCells++;
-    // update current layer button visual
+    // 更新本層的按鈕
     if (layer == currentLayer) updateButtonVisual(layer, r, c);
 
     if (cell.adj == 0) {
@@ -356,6 +357,7 @@ void Widget::revealCell(int layer, int r, int c)
     }
 }
 
+// 當格子為空時，展開鄰近格
 void Widget::revealNeighborsIfEmpty(int layer, int r, int c)
 {
     // BFS stack
@@ -386,6 +388,7 @@ void Widget::revealNeighborsIfEmpty(int layer, int r, int c)
     }
 }
 
+// 更新按鈕的顯示（依據是否揭露、是否插旗、是否地雷）
 void Widget::updateButtonVisual(int layer, int r, int c)
 {
     // Only update the displayed layer's buttons
@@ -396,8 +399,8 @@ void Widget::updateButtonVisual(int layer, int r, int c)
 
     QColor layerColor = getLayerColor(layer, cell.revealed);
     QString baseStyle = QString("QPushButton { background-color: %1; color: %2; border: 1px solid #000; font-weight: bold; font-size: 12px; }")
-                        .arg(layerColor.name())
-                        .arg(cell.revealed ? "#000000" : "#ffffff");
+                            .arg(layerColor.name())
+                            .arg(cell.revealed ? "#000000" : "#ffffff");
 
     if (cell.revealed) {
         btn->setEnabled(false);
@@ -406,18 +409,18 @@ void Widget::updateButtonVisual(int layer, int r, int c)
             btn->setStyleSheet(baseStyle + " QPushButton { font-size: 18px; }");
         } else if (cell.adj > 0) {
             btn->setText(QString::number(cell.adj));
-            // Different colors for different numbers
+            // 每個數字不同顏色
             QString numColor;
             switch (cell.adj) {
-                case 1: numColor = "#0000FF"; break;
-                case 2: numColor = "#008000"; break;
-                case 3: numColor = "#FF0000"; break;
-                case 4: numColor = "#000080"; break;
-                case 5: numColor = "#800000"; break;
-                case 6: numColor = "#008080"; break;
-                case 7: numColor = "#000000"; break;
-                case 8: numColor = "#808080"; break;
-                default: numColor = "#000000"; break;
+            case 1: numColor = "#0000FF"; break;
+            case 2: numColor = "#008000"; break;
+            case 3: numColor = "#FF0000"; break;
+            case 4: numColor = "#000080"; break;
+            case 5: numColor = "#800000"; break;
+            case 6: numColor = "#008080"; break;
+            case 7: numColor = "#000000"; break;
+            case 8: numColor = "#808080"; break;
+            default: numColor = "#000000"; break;
             }
             btn->setStyleSheet(baseStyle.replace("#000000", numColor));
         } else {
@@ -432,9 +435,10 @@ void Widget::updateButtonVisual(int layer, int r, int c)
     }
 }
 
+// 更新剩餘地雷數顯示
 void Widget::updateMineLabel()
 {
-    // count remaining = mineCount - flagged (global)
+    // 剩餘數量 = 總數 - 已插旗
     int flagged = 0;
     for (int l = 0; l < layers; ++l)
         for (int r = 0; r < rows; ++r)
@@ -444,41 +448,43 @@ void Widget::updateMineLabel()
     mineLabel->setText(QString("Mines: %1").arg(remain));
 }
 
+// 顯示指定層，重建按鈕並更新顯示
 void Widget::showLayer(int idx)
 {
     if (idx < 0 || idx >= layers) return;
     currentLayer = idx;
 
-    // rebuild visible buttons: easiest is to rebuild the grid widgets
-    // but we choose to update texts of existing buttons
-    // For simplicity we rebuild (clear + build) so visuals match model.
     clearBoardButtons();
     buildBoardButtons();
 
-    // update all visible cells in this layer
+    // 更新本層所有按鈕狀態
     for (int r = 0; r < rows; ++r)
         for (int c = 0; c < cols; ++c)
             updateButtonVisual(currentLayer, r, c);
 }
 
+// 切換到上一層
 void Widget::prevLayer()
 {
     int idx = layerBox->currentIndex();
     if (idx > 0) layerBox->setCurrentIndex(idx - 1);
 }
 
+// 切換到下一層
 void Widget::nextLayer()
 {
     int idx = layerBox->currentIndex();
     if (idx + 1 < layerBox->count()) layerBox->setCurrentIndex(idx + 1);
 }
 
+// 每秒更新計時器顯示
 void Widget::onTimerTick()
 {
     ++elapsedSeconds;
     timeLabel->setText(QString("Time: %1").arg(elapsedSeconds));
 }
 
+// 檢查是否勝利（揭露所有非地雷格或正確插旗所有地雷）
 void Widget::checkWinCondition()
 {
     const int totalCells = rows * cols * layers;
@@ -486,14 +492,13 @@ void Widget::checkWinCondition()
         gameOver = true;
         timer->stop();
         QMessageBox msgBox(this);
-        msgBox.setWindowTitle("🎉 Victory! 🎉");
-        msgBox.setText(QString("<h2 style='color: #00ff00;'>🏆 Congratulations! 🏆</h2><p>You cleared the field in %1 seconds.</p>").arg(elapsedSeconds));
+        msgBox.setWindowTitle("🎉 通關! 🎉");
+        msgBox.setText(QString("<h2 style='color: #00ff00;'>🏆 恭喜! 🏆</h2><p>您在 %1 秒內成功清空炸彈.</p>").arg(elapsedSeconds));
         msgBox.setIcon(QMessageBox::Information);
         msgBox.setStyleSheet("QMessageBox { background-color: #2b2b2b; } QLabel { color: #ffffff; } QPushButton { background-color: #4CAF50; color: white; padding: 5px 15px; border-radius: 3px; }");
         msgBox.exec();
     } else {
-        // also optional: if all mines flagged correctly -> win
-        // check if number of flagged == mineCount and all flagged are mines
+        // 檢查是否全標記，並且標記的都是地雷
         int flagged = 0;
         int correctFlags = 0;
         for (int l = 0; l < layers; ++l)
@@ -507,8 +512,8 @@ void Widget::checkWinCondition()
             gameOver = true;
             timer->stop();
             QMessageBox msgBox(this);
-            msgBox.setWindowTitle("🎉 Victory! 🎉");
-            msgBox.setText(QString("<h2 style='color: #00ff00;'>🏆 已標示所有地雷! 🏆</h2><p>Time: %1 seconds.</p>").arg(elapsedSeconds));
+            msgBox.setWindowTitle("🎉 通關! 🎉");
+            msgBox.setText(QString("<h2 style='color: #00ff00;'>🏆 已標示所有地雷! 🏆</h2><p>時間: %1 秒.</p>").arg(elapsedSeconds));
             msgBox.setIcon(QMessageBox::Information);
             msgBox.setStyleSheet("QMessageBox { background-color: #2b2b2b; } QLabel { color: #ffffff; } QPushButton { background-color: #4CAF50; color: white; padding: 5px 15px; border-radius: 3px; }");
             msgBox.exec();
@@ -516,45 +521,42 @@ void Widget::checkWinCondition()
     }
 }
 
+// 產生不同層的顏色
 QColor Widget::getLayerColor(int layer, bool revealed) const
 {
-    // Generate different colors for each layer
-    // Darker for unrevealed, lighter for revealed
     const QVector<QColor> layerBaseColors = {
-        QColor(70, 130, 180),   // Steel Blue - Layer 0
-        QColor(160, 82, 45),    // Sienna - Layer 1
-        QColor(85, 107, 47),    // Dark Olive Green - Layer 2
-        QColor(139, 69, 19),    // Saddle Brown - Layer 3
-        QColor(72, 61, 139),    // Dark Slate Blue - Layer 4
-        QColor(47, 79, 79),     // Dark Slate Gray - Layer 5
-        QColor(128, 0, 0),      // Maroon - Layer 6
-        QColor(0, 100, 0),      // Dark Green - Layer 7
-        QColor(75, 0, 130),     // Indigo - Layer 8
-        QColor(105, 105, 105)   // Dim Gray - Layer 9
+        QColor(70, 130, 180),   // Layer 0
+        QColor(160, 82, 45),    // Layer 1
+        QColor(85, 107, 47),    // Layer 2
+        QColor(139, 69, 19),    // Layer 3
+        QColor(72, 61, 139),    // Layer 4
+        QColor(47, 79, 79),     // Layer 5
+        QColor(128, 0, 0),      // Layer 6
+        QColor(0, 100, 0),      // Layer 7
+        QColor(75, 0, 130),     // Layer 8
+        QColor(105, 105, 105)   // Layer 9
     };
-    
+
     int colorIndex = layer % layerBaseColors.size();
     QColor baseColor = layerBaseColors[colorIndex];
-    
+
+    // 已揭露：較亮；未揭露：較暗
     if (revealed) {
-        // Lighter version for revealed cells
         return baseColor.lighter(180);
     } else {
-        // Darker version for unrevealed cells
         return baseColor.darker(120);
     }
 }
 
+// 視覺回饋：讓按鈕閃爍並顯示爆炸動畫
 void Widget::showExplosionEffect(int r, int c)
 {
-    // Visual feedback: make the button flash with explosion animation
     CellButton *btn = buttonGrid[r][c];
     if (!btn) return;
-    
-    // Create a simple animation effect by changing background color
+
+    // 改變按鈕圖示和顏色，使他有爆炸感
     btn->setStyleSheet("QPushButton { background-color: #ff0000; color: #ffffff; border: 3px solid #ffff00; font-size: 20px; }");
     btn->setText("💥");
-    
-    // Force UI update
+
     QApplication::processEvents();
 }
