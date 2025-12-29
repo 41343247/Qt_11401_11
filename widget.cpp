@@ -4,21 +4,20 @@
 Widget::Widget(QWidget *parent) : QWidget(parent)
 {
     // 初始化音效，使用嵌入的資料 URL（簡單的嗶聲）
-    revealSound = new QSoundEffect(this);
+    //revealSound = new QSoundEffect(this);
     explosionSound = new QSoundEffect(this);
     winSound = new QSoundEffect(this);
+    startSound = new QSoundEffect(this);
 
     // 設定音量
-    revealSound->setVolume(0.5);
+    //revealSound->setVolume(0.5);
     explosionSound->setVolume(0.7);
-
-    explosionSound = new QSoundEffect(this);
-    explosionSound->setSource(QUrl("qrc:/sounds/boom.wav"));
-    explosionSound->setVolume(0.7);
-    winSound = new QSoundEffect(this);
-    winSound->setSource(QUrl("qrc:/sounds/win.wav"));
     winSound->setVolume(0.7);
+    startSound->setVolume(0.7);
 
+    explosionSound->setSource(QUrl("qrc:/sounds/boom.wav"));
+    winSound->setSource(QUrl("qrc:/sounds/win.wav"));
+    startSound->setSource(QUrl("qrc:/sounds/start.wav"));
 
     buildUI();
     newGame();
@@ -127,6 +126,12 @@ void Widget::buildUI()
 
 void Widget::newGame()
 {
+    // 播放遊戲開始音效
+    if (startSound->source().isEmpty()) {
+        QApplication::beep();
+    } else {
+        startSound->play();
+    }
     // 讀取 UI 設定
     rows = spinRows->value();
     cols = spinCols->value();
