@@ -84,6 +84,7 @@ private:
     // Sound effects
     QSoundEffect *revealSound;
     QSoundEffect *explosionSound;
+    QSoundEffect *winSound;
 
     // game model
     QVector<QVector<QVector<Cell>>> board; // [layer][row][col]

@@ -6,6 +6,7 @@ Widget::Widget(QWidget *parent) : QWidget(parent)
     // 初始化音效，使用嵌入的資料 URL（簡單的嗶聲）
     revealSound = new QSoundEffect(this);
     explosionSound = new QSoundEffect(this);
+    winSound = new QSoundEffect(this);
 
     // 設定音量
     revealSound->setVolume(0.5);
@@ -14,6 +15,9 @@ Widget::Widget(QWidget *parent) : QWidget(parent)
     explosionSound = new QSoundEffect(this);
     explosionSound->setSource(QUrl("qrc:/sounds/boom.wav"));
     explosionSound->setVolume(0.7);
+    winSound = new QSoundEffect(this);
+    winSound->setSource(QUrl("qrc:/sounds/win.wav"));
+    winSound->setVolume(0.7);
 
 
     buildUI();
@@ -31,35 +35,35 @@ void Widget::buildUI()
     setStyleSheet("QWidget { background-color: #2b2b2b; color: #ffffff; font-family: Arial; }");
 
     // 上方控制項
-    QLabel *lblRows = new QLabel("Rows:");
+    QLabel *lblRows = new QLabel("橫排:");
     lblRows->setStyleSheet("font-weight: bold;");
     spinRows = new QSpinBox(this);
     spinRows->setRange(5, 20);
     spinRows->setValue(rows);
     spinRows->setStyleSheet("QSpinBox { background-color: #3c3c3c; color: #ffffff; border: 1px solid #555; padding: 3px; }");
 
-    QLabel *lblCols = new QLabel("Cols:");
+    QLabel *lblCols = new QLabel("直排:");
     lblCols->setStyleSheet("font-weight: bold;");
     spinCols = new QSpinBox(this);
     spinCols->setRange(5, 20);
     spinCols->setValue(cols);
     spinCols->setStyleSheet("QSpinBox { background-color: #3c3c3c; color: #ffffff; border: 1px solid #555; padding: 3px; }");
 
-    QLabel *lblLayers = new QLabel("Layers:");
+    QLabel *lblLayers = new QLabel("層數:");
     lblLayers->setStyleSheet("font-weight: bold;");
     spinLayers = new QSpinBox(this);
     spinLayers->setRange(1, 10);
     spinLayers->setValue(layers);
     spinLayers->setStyleSheet("QSpinBox { background-color: #3c3c3c; color: #ffffff; border: 1px solid #555; padding: 3px; }");
 
-    QLabel *lblMines = new QLabel("Mines:");
+    QLabel *lblMines = new QLabel("炸彈數:");
     lblMines->setStyleSheet("font-weight: bold;");
     spinMines = new QSpinBox(this);
     spinMines->setRange(1, 200);
     spinMines->setValue(mineCount);
     spinMines->setStyleSheet("QSpinBox { background-color: #3c3c3c; color: #ffffff; border: 1px solid #555; padding: 3px; }");
 
-    newGameBtn = new QPushButton("New Game", this);
+    newGameBtn = new QPushButton("開新遊戲", this);
     newGameBtn->setStyleSheet("QPushButton { background-color: #4CAF50; color: white; border: none; padding: 5px 15px; font-weight: bold; border-radius: 3px; } QPushButton:hover { background-color: #45a049; }");
     connect(newGameBtn, &QPushButton::clicked, this, &Widget::newGame);
 
@@ -496,6 +500,12 @@ void Widget::checkWinCondition()
     if (revealedCells == totalCells - mineCount) {
         gameOver = true;
         timer->stop();
+        // 播放過關音效
+        if (winSound->source().isEmpty()) {
+            QApplication::beep();
+        } else {
+            winSound->play();
+        }
         QMessageBox msgBox(this);
         msgBox.setWindowTitle("🎉 通關! 🎉");
         msgBox.setText(QString("<h2 style='color: #00ff00;'>🏆 恭喜! 🏆</h2><p>您在 %1 秒內成功清空炸彈.</p>").arg(elapsedSeconds));
@@ -516,6 +526,12 @@ void Widget::checkWinCondition()
         if (flagged == mineCount && correctFlags == mineCount) {
             gameOver = true;
             timer->stop();
+            // 播放過關音效
+            if (winSound->source().isEmpty()) {
+                QApplication::beep();
+            } else {
+                winSound->play();
+            }
             QMessageBox msgBox(this);
             msgBox.setWindowTitle("🎉 通關! 🎉");
             msgBox.setText(QString("<h2 style='color: #00ff00;'>🏆 已標示所有地雷! 🏆</h2><p>時間: %1 秒.</p>").arg(elapsedSeconds));
