@@ -1,5 +1,6 @@
 #include "polyhedrawidget.h"
 #include <QApplication>
+#include <QSet>
 #include <algorithm>
 
 PolyhedraWidget::PolyhedraWidget(PolyhedraType type, QWidget *parent)
@@ -101,7 +102,7 @@ void PolyhedraWidget::setupPolyhedraStructure()
             {2, 3, 9, 11, 6},    // Face 8
             {3, 4, 10, 11, 8},   // Face 9
             {4, 5, 7, 11, 9},    // Face 10
-            {5, 6, 7, 8, 9, 10}  // Face 11 (bottom)
+            {6, 7, 8, 9, 10}     // Face 11 (bottom) - adjacent to 5 faces
         };
         
         faceColors = {
@@ -307,24 +308,25 @@ void PolyhedraWidget::placeMinesSafely(int safeFace, int safeR, int safeC)
     const int totalCells = faceCount * rowsPerFace * colsPerFace;
     idxs.reserve(totalCells);
 
+    // Get safe cell neighbors once
+    auto safeNeighbors = getEdgeAdjacentCells(safeFace, safeR, safeC);
+    
+    // Build safe cells set for efficient lookup
+    QSet<QPair<int, int>> safeArea;
+    safeArea.insert({safeR, safeC});
+    for (const auto &neighbor : safeNeighbors) {
+        safeArea.insert(neighbor);
+    }
+
     for (int f = 0; f < faceCount; ++f) {
         for (int r = 0; r < rowsPerFace; ++r) {
             for (int c = 0; c < colsPerFace; ++c) {
-                // Skip safe cell and its edge-adjacent neighbors
-                if (f == safeFace && r == safeR && c == safeC) continue;
-                
-                bool isSafe = false;
-                auto neighbors = getEdgeAdjacentCells(safeFace, safeR, safeC);
-                for (const auto &neighbor : neighbors) {
-                    if (f == safeFace && r == neighbor.first && c == neighbor.second) {
-                        isSafe = true;
-                        break;
-                    }
+                // Skip cells in safe area on the safe face
+                if (f == safeFace && safeArea.contains({r, c})) {
+                    continue;
                 }
                 
-                if (!isSafe) {
-                    idxs.append(f * rowsPerFace * colsPerFace + r * colsPerFace + c);
-                }
+                idxs.append(f * rowsPerFace * colsPerFace + r * colsPerFace + c);
             }
         }
     }
@@ -338,6 +340,7 @@ void PolyhedraWidget::placeMinesSafely(int safeFace, int safeR, int safeC)
         int c = rem % colsPerFace;
         faces[f][r][c].isMine = true;
     }
+}
 }
 
 void PolyhedraWidget::calculateAdjacents()

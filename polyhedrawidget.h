@@ -21,7 +21,7 @@ struct FaceCell {
     bool isMine = false;
     bool revealed = false;
     bool flagged = false;
-    int adj = 0; // Adjacent mines count (edge-adjacent only)
+    int adj = 0; // Count of adjacent mines (using edge-adjacency only, not vertex-adjacency)
 };
 
 // Face button for grid cells
