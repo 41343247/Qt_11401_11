@@ -55,9 +55,6 @@ public:
     explicit Widget(QWidget *parent = nullptr);
     ~Widget();
 
-signals:
-    void backToMenu();                    // 返回主選單
-
 private slots:
     void newGame();                       // 重新開始
     void onLeftClick(int r, int c);       // 左鍵揭露（當前層）
@@ -66,7 +63,6 @@ private slots:
     void prevLayer();                     // 上一層
     void nextLayer();                     // 下一層
     void onTimerTick();                   // 計時器
-    void showHint();                      // 提示功能
 private:
     // UI
     QGridLayout *boardLayout;
@@ -81,8 +77,6 @@ private:
     QSpinBox *spinCols;
     QSpinBox *spinLayers;
     QSpinBox *spinMines;
-    QPushButton *hintBtn;
-    QPushButton *backBtn;
 
     QTimer *timer;
     int elapsedSeconds = 0;

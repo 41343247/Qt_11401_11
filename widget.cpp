@@ -66,16 +66,7 @@ void Widget::buildUI()
     newGameBtn->setStyleSheet("QPushButton { background-color: #4CAF50; color: white; border: none; padding: 5px 15px; font-weight: bold; border-radius: 3px; } QPushButton:hover { background-color: #45a049; }");
     connect(newGameBtn, &QPushButton::clicked, this, &Widget::newGame);
 
-    hintBtn = new QPushButton("💡 提示", this);
-    hintBtn->setStyleSheet("QPushButton { background-color: #FFA500; color: white; border: none; padding: 5px 15px; font-weight: bold; border-radius: 3px; } QPushButton:hover { background-color: #FF8C00; }");
-    connect(hintBtn, &QPushButton::clicked, this, &Widget::showHint);
-
-    backBtn = new QPushButton("← 返回選單", this);
-    backBtn->setStyleSheet("QPushButton { background-color: #555; color: white; border: none; padding: 5px 15px; font-weight: bold; border-radius: 3px; } QPushButton:hover { background-color: #666; }");
-    connect(backBtn, &QPushButton::clicked, this, &Widget::backToMenu);
-
     QHBoxLayout *ctrlLayout = new QHBoxLayout();
-    ctrlLayout->addWidget(backBtn);
     ctrlLayout->addWidget(lblRows);
     ctrlLayout->addWidget(spinRows);
     ctrlLayout->addWidget(lblCols);
@@ -85,7 +76,6 @@ void Widget::buildUI()
     ctrlLayout->addWidget(lblMines);
     ctrlLayout->addWidget(spinMines);
     ctrlLayout->addWidget(newGameBtn);
-    ctrlLayout->addWidget(hintBtn);
 
     // 層控制
     prevBtn = new QPushButton("上一層", this);
@@ -595,36 +585,4 @@ void Widget::showExplosionEffect(int r, int c)
     btn->setText("💥");
 
     QApplication::processEvents();
-}
-
-// 提示功能：揭露當前層的一個隨機安全格
-void Widget::showHint()
-{
-    if (gameOver || firstClick) return;
-
-    // 收集當前層所有未揭露且非地雷的格子
-    QVector<QPair<int, int>> safeCells;
-    for (int r = 0; r < rows; ++r) {
-        for (int c = 0; c < cols; ++c) {
-            Cell &cell = board[currentLayer][r][c];
-            if (!cell.revealed && !cell.isMine) {
-                safeCells.append({r, c});
-            }
-        }
-    }
-
-    if (safeCells.isEmpty()) {
-        QMessageBox::information(this, "提示", "當前層沒有更多安全格可以揭露！");
-        return;
-    }
-
-    // 隨機選擇一個安全格
-    int idx = QRandomGenerator::global()->bounded(safeCells.size());
-    int r = safeCells[idx].first;
-    int c = safeCells[idx].second;
-
-    // 揭露該格
-    revealCell(currentLayer, r, c);
-    updateButtonVisual(currentLayer, r, c);
-    checkWinCondition();
 }
