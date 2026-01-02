@@ -203,10 +203,31 @@ void PolyhedraWidget::buildUI()
     mainFaceLayout->setSpacing(2);
     faceLayout->addLayout(mainFaceLayout);
 
+    // Adjacent faces display (right side)
+    adjacentFacesWidget = new QWidget(this);
+    adjacentFacesWidget->setStyleSheet("QWidget { background-color: #1a1a1a; border-radius: 5px; }");
+    adjacentFacesLayout = new QVBoxLayout(adjacentFacesWidget);
+    adjacentFacesLayout->setSpacing(10);
+    
+    QLabel *adjTitle = new QLabel("Adjacent Faces (Preview)", adjacentFacesWidget);
+    adjTitle->setStyleSheet("font-size: 12px; font-weight: bold; color: #aaa;");
+    adjTitle->setAlignment(Qt::AlignCenter);
+    adjTitle->setWordWrap(true);
+    adjacentFacesLayout->addWidget(adjTitle);
+    adjacentFacesLayout->addStretch();
+
+    QScrollArea *adjScroll = new QScrollArea(this);
+    adjScroll->setWidget(adjacentFacesWidget);
+    adjScroll->setWidgetResizable(true);
+    adjScroll->setFixedWidth(180);
+    adjScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    adjScroll->setStyleSheet("QScrollArea { border: none; background-color: #1a1a1a; }");
+
     // Main layout
     QHBoxLayout *gameLayout = new QHBoxLayout();
     gameLayout->addWidget(thumbScroll);
     gameLayout->addWidget(faceWidget, 1);
+    gameLayout->addWidget(adjScroll);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->addLayout(ctrlLayout);
@@ -233,6 +254,7 @@ void PolyhedraWidget::newGame()
     resetModel();
     clearFaceButtons();
     buildFaceButtons();
+    clearAdjacentFacesDisplay();
     updateMineLabel();
     faceLabel->setText(QString("Face: %1").arg(currentFace));
 }
@@ -300,6 +322,120 @@ void PolyhedraWidget::clearFaceButtons()
         }
         delete it;
     }
+}
+
+void PolyhedraWidget::clearAdjacentFacesDisplay()
+{
+    // Remove all widgets except the title (first widget)
+    while (adjacentFacesLayout->count() > 1) {
+        QLayoutItem *it = adjacentFacesLayout->takeAt(1);
+        if (it) {
+            QWidget *w = it->widget();
+            if (w) {
+                w->setParent(nullptr);
+                delete w;
+            }
+            delete it;
+        }
+    }
+}
+
+void PolyhedraWidget::buildAdjacentFacesDisplay()
+{
+    clearAdjacentFacesDisplay();
+    
+    if (currentFace < 0 || currentFace >= faceCount) return;
+    
+    // Get adjacent faces
+    const QVector<int> &adjFaces = faceAdjacency[currentFace];
+    
+    // For each adjacent face, create a small preview
+    for (int adjFace : adjFaces) {
+        QFrame *faceFrame = new QFrame(adjacentFacesWidget);
+        faceFrame->setStyleSheet("QFrame { background-color: #2a2a2a; border-radius: 3px; padding: 5px; }");
+        QVBoxLayout *frameLayout = new QVBoxLayout(faceFrame);
+        frameLayout->setSpacing(2);
+        frameLayout->setContentsMargins(5, 5, 5, 5);
+        
+        // Face label
+        QLabel *faceLbl = new QLabel(QString("Face %1").arg(adjFace), faceFrame);
+        QColor faceColor = getFaceColor(adjFace);
+        faceLbl->setStyleSheet(QString("font-size: 10px; font-weight: bold; color: %1;").arg(faceColor.name()));
+        faceLbl->setAlignment(Qt::AlignCenter);
+        frameLayout->addWidget(faceLbl);
+        
+        // Create a small grid preview (max 4x4 to keep it compact)
+        QGridLayout *previewGrid = new QGridLayout();
+        previewGrid->setSpacing(1);
+        
+        int previewRows = qMin(4, rowsPerFace);
+        int previewCols = qMin(4, colsPerFace);
+        int btnSize = 20;
+        
+        for (int r = 0; r < previewRows; ++r) {
+            for (int c = 0; c < previewCols; ++c) {
+                QPushButton *btn = new QPushButton(faceFrame);
+                btn->setFixedSize(btnSize, btnSize);
+                btn->setEnabled(false);
+                btn->setFocusPolicy(Qt::NoFocus);
+                
+                // Map preview position to actual cell position
+                int actualR = (r * rowsPerFace) / previewRows;
+                int actualC = (c * colsPerFace) / previewCols;
+                
+                FaceCell &cell = faces[adjFace][actualR][actualC];
+                
+                if (cell.revealed) {
+                    if (cell.isMine) {
+                        btn->setText("💣");
+                        btn->setStyleSheet(QString(
+                            "QPushButton { background-color: %1; color: #fff; border: 1px solid #000; font-size: 10px; }"
+                        ).arg(faceColor.lighter(150).name()));
+                    } else if (cell.adj > 0) {
+                        btn->setText(QString::number(cell.adj));
+                        QString numColor;
+                        switch (cell.adj) {
+                        case 1: numColor = "#0000FF"; break;
+                        case 2: numColor = "#008000"; break;
+                        case 3: numColor = "#FF0000"; break;
+                        case 4: numColor = "#000080"; break;
+                        default: numColor = "#000000"; break;
+                        }
+                        btn->setStyleSheet(QString(
+                            "QPushButton { background-color: %1; color: %2; border: 1px solid #000; font-size: 8px; font-weight: bold; }"
+                        ).arg(faceColor.lighter(180).name()).arg(numColor));
+                    } else {
+                        btn->setText("");
+                        btn->setStyleSheet(QString(
+                            "QPushButton { background-color: %1; border: 1px solid #000; }"
+                        ).arg(faceColor.lighter(180).name()));
+                    }
+                } else {
+                    btn->setText("");
+                    btn->setStyleSheet(QString(
+                        "QPushButton { background-color: %1; border: 1px solid #000; }"
+                    ).arg(faceColor.darker(120).name()));
+                    
+                    if (cell.flagged) {
+                        btn->setText("⚑");
+                        btn->setStyleSheet(QString(
+                            "QPushButton { background-color: %1; color: #fff; border: 1px solid #000; font-size: 10px; }"
+                        ).arg(faceColor.darker(120).name()));
+                    }
+                }
+                
+                previewGrid->addWidget(btn, r, c);
+            }
+        }
+        
+        frameLayout->addLayout(previewGrid);
+        adjacentFacesLayout->insertWidget(adjacentFacesLayout->count() - 1, faceFrame);
+    }
+}
+
+void PolyhedraWidget::updateAdjacentFacesDisplay()
+{
+    buildAdjacentFacesDisplay();
 }
 
 void PolyhedraWidget::placeMinesSafely(int safeFace, int safeR, int safeC)
@@ -402,6 +538,8 @@ void PolyhedraWidget::onLeftClick(int r, int c)
         calculateAdjacents();
         firstClick = false;
         timer->start();
+        // Build adjacent faces display after first click
+        buildAdjacentFacesDisplay();
     }
 
     FaceCell &cell = faces[currentFace][r][c];
@@ -425,6 +563,9 @@ void PolyhedraWidget::onLeftClick(int r, int c)
                 }
             }
         }
+        
+        // Update adjacent faces display to show revealed mines
+        updateAdjacentFacesDisplay();
         
         gameOver = true;
         timer->stop();
@@ -454,6 +595,8 @@ void PolyhedraWidget::onRightClick(int r, int c)
     cell.flagged = !cell.flagged;
     updateButtonVisual(currentFace, r, c);
     updateMineLabel();
+    // Update adjacent faces display if flagging happens on adjacent faces
+    updateAdjacentFacesDisplay();
 }
 
 void PolyhedraWidget::revealCell(int face, int r, int c)
@@ -464,7 +607,15 @@ void PolyhedraWidget::revealCell(int face, int r, int c)
     cell.revealed = true;
     revealedCells++;
     
-    if (face == currentFace) updateButtonVisual(face, r, c);
+    if (face == currentFace) {
+        updateButtonVisual(face, r, c);
+    } else {
+        // Check if this face is adjacent to current face and update preview
+        const QVector<int> &adjFaces = faceAdjacency[currentFace];
+        if (adjFaces.contains(face)) {
+            updateAdjacentFacesDisplay();
+        }
+    }
     
     if (cell.adj == 0) {
         revealNeighborsIfEmpty(face, r, c);
@@ -475,6 +626,9 @@ void PolyhedraWidget::revealNeighborsIfEmpty(int face, int r, int c)
 {
     QVector<QPair<QPair<int, int>, int>> stack; // ((r, c), face)
     stack.append({{r, c}, face});
+    
+    bool needsAdjacentUpdate = false;
+    const QVector<int> &adjFaces = faceAdjacency[currentFace];
     
     while (!stack.isEmpty()) {
         auto item = stack.takeLast();
@@ -495,12 +649,21 @@ void PolyhedraWidget::revealNeighborsIfEmpty(int face, int r, int c)
             ncell.revealed = true;
             revealedCells++;
             
-            if (cf == currentFace) updateButtonVisual(cf, nr, nc);
+            if (cf == currentFace) {
+                updateButtonVisual(cf, nr, nc);
+            } else if (adjFaces.contains(cf)) {
+                needsAdjacentUpdate = true;
+            }
             
             if (ncell.adj == 0) {
                 stack.append({{nr, nc}, cf});
             }
         }
+    }
+    
+    // Update adjacent faces display if any adjacent face cells were revealed
+    if (needsAdjacentUpdate) {
+        updateAdjacentFacesDisplay();
     }
 }
 
@@ -606,6 +769,9 @@ void PolyhedraWidget::switchToFace(int faceIdx)
             updateButtonVisual(currentFace, r, c);
         }
     }
+    
+    // Update adjacent faces display
+    buildAdjacentFacesDisplay();
 }
 
 void PolyhedraWidget::onTimerTick()
