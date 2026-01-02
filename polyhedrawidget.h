@@ -111,6 +111,8 @@ private:
     // Adjacent face previews
     QWidget *adjacentPreviewsWidget;
     QVBoxLayout *adjacentPreviewsLayout;
+    QWidget *previewContainer;
+    QVBoxLayout *previewContainerLayout;
     struct AdjacentFacePreview {
         int faceIndex;
         QFrame *frame;
@@ -122,6 +124,11 @@ private:
 
     QTimer *timer;
     int elapsedSeconds = 0;
+    
+    // Preview panel constants
+    static constexpr int MIN_PREVIEW_CELL_SIZE = 8;
+    static constexpr int MAX_PREVIEW_CELL_SIZE = 12;
+    static constexpr int PREVIEW_PANEL_WIDTH = 120;
 
     // Sound effects
     QSoundEffect *explosionSound;

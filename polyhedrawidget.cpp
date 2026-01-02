@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QSet>
 #include <algorithm>
+#include <cassert>
 
 PolyhedraWidget::PolyhedraWidget(PolyhedraType type, QWidget *parent)
     : QWidget(parent), polyType(type)
@@ -213,6 +214,13 @@ void PolyhedraWidget::buildUI()
     previewTitle->setStyleSheet("font-size: 14px; font-weight: bold; color: #fff; background-color: transparent;");
     previewTitle->setAlignment(Qt::AlignCenter);
     adjacentPreviewsLayout->addWidget(previewTitle);
+    
+    // Container for preview frames (so we can insert without worrying about stretch)
+    previewContainer = new QWidget(adjacentPreviewsWidget);
+    previewContainerLayout = new QVBoxLayout(previewContainer);
+    previewContainerLayout->setSpacing(5);
+    previewContainerLayout->setContentsMargins(0, 0, 0, 0);
+    adjacentPreviewsLayout->addWidget(previewContainer);
     adjacentPreviewsLayout->addStretch();
 
     QScrollArea *previewScroll = new QScrollArea(this);
@@ -730,10 +738,10 @@ void PolyhedraWidget::showHint()
 void PolyhedraWidget::buildAdjacentPreviews()
 {
     // Clear existing previews
+    // Qt's parent-child ownership will handle cleanup, but we need to clear our references
     for (auto &preview : adjacentPreviews) {
         if (preview.frame) {
-            preview.frame->setParent(nullptr);
-            delete preview.frame;
+            preview.frame->deleteLater();
         }
     }
     adjacentPreviews.clear();
@@ -772,8 +780,10 @@ void PolyhedraWidget::buildAdjacentPreviews()
         preview.gridLayout->setSpacing(1);
         preview.gridLayout->setContentsMargins(0, 0, 0, 0);
         
-        // Determine cell size based on grid dimensions
-        int cellSize = qMax(8, qMin(12, 120 / qMax(rowsPerFace, colsPerFace)));
+        // Determine cell size based on grid dimensions to fit in preview panel
+        int cellSize = qMax(MIN_PREVIEW_CELL_SIZE, 
+                           qMin(MAX_PREVIEW_CELL_SIZE, 
+                                PREVIEW_PANEL_WIDTH / qMax(rowsPerFace, colsPerFace)));
         
         // Create cells for the preview
         preview.cells.resize(rowsPerFace);
@@ -800,8 +810,8 @@ void PolyhedraWidget::buildAdjacentPreviews()
         
         frameLayout->addLayout(preview.gridLayout);
         
-        // Add to layout (before the stretch)
-        adjacentPreviewsLayout->insertWidget(adjacentPreviewsLayout->count() - 1, preview.frame);
+        // Add to preview container layout
+        previewContainerLayout->addWidget(preview.frame);
         
         adjacentPreviews.append(preview);
     }
@@ -818,7 +828,8 @@ void PolyhedraWidget::updateAdjacentPreview(int adjacentFaceIdx)
             // Update each cell in the preview
             for (int r = 0; r < rowsPerFace; ++r) {
                 for (int c = 0; c < colsPerFace; ++c) {
-                    if (r >= preview.cells.size() || c >= preview.cells[r].size()) continue;
+                    // Assert that preview cells are properly sized
+                    assert(r < preview.cells.size() && c < preview.cells[r].size());
                     
                     QLabel *cell = preview.cells[r][c];
                     const FaceCell &gameCell = faces[adjacentFaceIdx][r][c];
