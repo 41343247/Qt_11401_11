@@ -99,6 +99,8 @@ private:
     // UI
     QGridLayout *mainFaceLayout;
     QVBoxLayout *thumbnailLayout;
+    QWidget *adjacentFacesWidget;
+    QVBoxLayout *adjacentFacesLayout;
     QVector<QVector<FaceCellButton*>> buttonGrid;
     QVector<FaceThumbnail*> thumbnails;
     QLabel *mineLabel;
@@ -141,6 +143,9 @@ private:
     void setupPolyhedraStructure();
     void buildFaceButtons();
     void clearFaceButtons();
+    void buildAdjacentFacesDisplay();
+    void clearAdjacentFacesDisplay();
+    void updateAdjacentFacesDisplay();
     void resetModel();
     void placeMinesSafely(int safeFace, int safeR, int safeC);
     void calculateAdjacents();
