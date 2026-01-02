@@ -23,29 +23,17 @@ Classic minesweeper extended into multiple layers, creating a true 3D experience
 3. Use layer navigation to explore 3D space
 4. Win by revealing all safe cells
 
-### 🎲 Game 2: Multi-Face Minesweeper (3D Hollow Polyhedra)
+### 🎲 Game 2: Multi-Face Minesweeper (Hollow Quadrilateral Hexahedron)
 
-Unique minesweeper on the surface of 3D polyhedra - a truly innovative gameplay experience!
+Unique minesweeper on the surface of a 3D cube - a truly innovative gameplay experience!
 
-#### Three Difficulty Levels
+#### Game Features
 
-**🔺 Easy: Tetrahedron**
-- 4 triangular faces
-- 5×5 grid per face
-- 8 mines total
-- Each face adjacent to 3 others
-
-**🔷 Medium: Cube**
+**🔷 Hollow Quadrilateral Hexahedron (Cube)**
 - 6 square faces  
 - 6×6 grid per face
 - 15 mines total
 - Each face adjacent to 4 others
-
-**⬟ Hard: Dodecahedron**
-- 12 pentagonal faces
-- 5×5 grid per face
-- 25 mines total
-- Each face adjacent to 5 others
 
 #### Unique Features
 
@@ -68,12 +56,11 @@ Unique minesweeper on the surface of 3D polyhedra - a truly innovative gameplay 
 - Main view shows interactive grid
 
 #### How to Play
-1. Select difficulty (Easy/Medium/Hard)
-2. Click cells to reveal on current face
-3. Right-click to flag suspected mines
-4. Use face thumbnails to switch views
-5. Check adjacent face previews for hints
-6. Win by revealing all non-mine cells
+1. Click cells to reveal on current face
+2. Right-click to flag suspected mines
+3. Use face thumbnails to switch views
+4. Check adjacent face previews for hints
+5. Win by revealing all non-mine cells
 
 ### 🛠️ Building the Project
 
@@ -89,7 +76,7 @@ make
 - **Architecture**: Model-View design with proper separation
 - **Features**: 
   - Multi-layer 3D minesweeper (Game 1)
-  - Multi-face hollow polyhedra minesweeper (Game 2)
+  - Hollow quadrilateral hexahedron (cube) minesweeper (Game 2)
   - Sound effects and visual feedback
   - Advanced UI with preview panels
 
@@ -103,6 +90,5 @@ For detailed information about Game 2:
 ### 🎯 Game Selection
 
 When you launch the application:
-1. Choose between Game 1 (Multi-Layer) or Game 2 (Multi-Face)
-2. For Game 2, select difficulty level
-3. Start playing and enjoy!
+1. Choose between Game 1 (Multi-Layer) or Game 2 (Hollow Quadrilateral Hexahedron)
+2. Start playing and enjoy!
