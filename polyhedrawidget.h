@@ -107,9 +107,28 @@ private:
     QPushButton *newGameBtn;
     QPushButton *hintBtn;
     QPushButton *backBtn;
+    
+    // Adjacent face previews
+    QWidget *adjacentPreviewsWidget;
+    QVBoxLayout *adjacentPreviewsLayout;
+    QWidget *previewContainer;
+    QVBoxLayout *previewContainerLayout;
+    struct AdjacentFacePreview {
+        int faceIndex;
+        QFrame *frame;
+        QLabel *label;
+        QGridLayout *gridLayout;
+        QVector<QVector<QLabel*>> cells;
+    };
+    QVector<AdjacentFacePreview> adjacentPreviews;
 
     QTimer *timer;
     int elapsedSeconds = 0;
+    
+    // Preview panel constants
+    static constexpr int MIN_PREVIEW_CELL_SIZE = 8;
+    static constexpr int MAX_PREVIEW_CELL_SIZE = 12;
+    static constexpr int PREVIEW_PANEL_WIDTH = 120;
 
     // Sound effects
     QSoundEffect *explosionSound;
@@ -152,6 +171,11 @@ private:
     void checkWinCondition();
     QColor getFaceColor(int face) const;
     void showExplosionEffect(int r, int c);
+    
+    // Adjacent face preview helpers
+    void buildAdjacentPreviews();
+    void updateAdjacentPreview(int adjacentFaceIdx);
+    void updateAllAdjacentPreviews();
     
     // Edge-adjacency helper
     QVector<QPair<int, int>> getEdgeAdjacentCells(int face, int r, int c) const;
