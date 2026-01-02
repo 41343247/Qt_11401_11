@@ -341,7 +341,7 @@ void PolyhedraWidget::placeMinesSafely(int safeFace, int safeR, int safeC)
         faces[f][r][c].isMine = true;
     }
 }
-}
+
 
 void PolyhedraWidget::calculateAdjacents()
 {
