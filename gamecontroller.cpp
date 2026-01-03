@@ -53,24 +53,22 @@ void GameController::showGame1()
 
 void GameController::showGame2Difficulty()
 {
-    stackedWidget->setCurrentWidget(difficultyWidget);
+    // Directly show Cube game (hollow quadrilateral hexahedron)
+    showGame2Medium();
 }
 
 void GameController::showGame2Easy()
 {
-    if (!game2EasyWidget) {
-        game2EasyWidget = new PolyhedraWidget(PolyhedraWidget::TETRAHEDRON, this);
-        connect(game2EasyWidget, &PolyhedraWidget::backToMenu, this, &GameController::showGame2Difficulty);
-        stackedWidget->addWidget(game2EasyWidget);
-    }
-    stackedWidget->setCurrentWidget(game2EasyWidget);
+    // Easy mode removed - redirect to Cube
+    showGame2Medium();
 }
 
 void GameController::showGame2Medium()
 {
     if (!game2MediumWidget) {
         game2MediumWidget = new PolyhedraWidget(PolyhedraWidget::CUBE, this);
-        connect(game2MediumWidget, &PolyhedraWidget::backToMenu, this, &GameController::showGame2Difficulty);
+        // Back button goes directly to main menu now
+        connect(game2MediumWidget, &PolyhedraWidget::backToMenu, this, &GameController::showMenu);
         stackedWidget->addWidget(game2MediumWidget);
     }
     stackedWidget->setCurrentWidget(game2MediumWidget);
@@ -78,10 +76,6 @@ void GameController::showGame2Medium()
 
 void GameController::showGame2Hard()
 {
-    if (!game2HardWidget) {
-        game2HardWidget = new PolyhedraWidget(PolyhedraWidget::DODECAHEDRON, this);
-        connect(game2HardWidget, &PolyhedraWidget::backToMenu, this, &GameController::showGame2Difficulty);
-        stackedWidget->addWidget(game2HardWidget);
-    }
-    stackedWidget->setCurrentWidget(game2HardWidget);
+    // Hard mode removed - redirect to Cube
+    showGame2Medium();
 }
