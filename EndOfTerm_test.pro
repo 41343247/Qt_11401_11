@@ -10,10 +10,12 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
-    widget.cpp
+    widget.cpp \
+    game2.cpp
 
 HEADERS += \
-    widget.h
+    widget.h \
+    game2.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

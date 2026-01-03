@@ -30,7 +30,7 @@ Widget::~Widget()
 void Widget::buildUI()
 {
     // 設定視窗屬性
-    setWindowTitle("Multi-Layer Minesweeper");
+    setWindowTitle("多層掃雷遊戲");
     setStyleSheet("QWidget { background-color: #2b2b2b; color: #ffffff; font-family: Arial; }");
 
     // 上方控制項
@@ -66,6 +66,10 @@ void Widget::buildUI()
     newGameBtn->setStyleSheet("QPushButton { background-color: #4CAF50; color: white; border: none; padding: 5px 15px; font-weight: bold; border-radius: 3px; } QPushButton:hover { background-color: #45a049; }");
     connect(newGameBtn, &QPushButton::clicked, this, &Widget::newGame);
 
+    hintBtn = new QPushButton("提示", this);
+    hintBtn->setStyleSheet("QPushButton { background-color: #FFA500; color: white; border: none; padding: 5px 15px; font-weight: bold; border-radius: 3px; } QPushButton:hover { background-color: #FF8C00; }");
+    connect(hintBtn, &QPushButton::clicked, this, &Widget::onHintClicked);
+
     QHBoxLayout *ctrlLayout = new QHBoxLayout();
     ctrlLayout->addWidget(lblRows);
     ctrlLayout->addWidget(spinRows);
@@ -76,6 +80,7 @@ void Widget::buildUI()
     ctrlLayout->addWidget(lblMines);
     ctrlLayout->addWidget(spinMines);
     ctrlLayout->addWidget(newGameBtn);
+    ctrlLayout->addWidget(hintBtn);
 
     // 層控制
     prevBtn = new QPushButton("上一層", this);
@@ -95,9 +100,9 @@ void Widget::buildUI()
     layerLayout->addWidget(nextBtn);
 
     // 資訊顯示
-    mineLabel = new QLabel("Mines: 0", this);
+    mineLabel = new QLabel("地雷: 0", this);
     mineLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #FFD700;");
-    timeLabel = new QLabel("Time: 0", this);
+    timeLabel = new QLabel("時間: 0", this);
     timeLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #87CEEB;");
 
     QHBoxLayout *infoLayout = new QHBoxLayout();
@@ -139,7 +144,7 @@ void Widget::newGame()
     mineCount = spinMines->value();
 
     if (mineCount >= rows * cols * layers) {
-        QMessageBox::warning(this, "Invalid", "Too many mines for the board size.");
+        QMessageBox::warning(this, "無效", "地雷數量太多，超過棋盤大小。");
         return;
     }
 
@@ -149,14 +154,14 @@ void Widget::newGame()
     revealedCells = 0;
     elapsedSeconds = 0;
     timer->stop();
-    timeLabel->setText("Time: 0");
+    timeLabel->setText("時間: 0");
 
     // 重建層選擇器
     resetModel();
 
     // 建立棋盤按鈕
     layerBox->clear();
-    for (int l = 0; l < layers; ++l) layerBox->addItem(QString("Layer %1").arg(l+1));
+    for (int l = 0; l < layers; ++l) layerBox->addItem(QString("第 %1 層").arg(l+1));
     currentLayer = 0;
     layerBox->setCurrentIndex(currentLayer);
 
@@ -459,7 +464,7 @@ void Widget::updateMineLabel()
             for (int c = 0; c < cols; ++c)
                 if (board[l][r][c].flagged) ++flagged;
     int remain = mineCount - flagged;
-    mineLabel->setText(QString("Mines: %1").arg(remain));
+    mineLabel->setText(QString("地雷: %1").arg(remain));
 }
 
 // 顯示指定層，重建按鈕並更新顯示
@@ -495,7 +500,7 @@ void Widget::nextLayer()
 void Widget::onTimerTick()
 {
     ++elapsedSeconds;
-    timeLabel->setText(QString("Time: %1").arg(elapsedSeconds));
+    timeLabel->setText(QString("時間: %1").arg(elapsedSeconds));
 }
 
 // 檢查是否勝利（揭露所有非地雷格或正確插旗所有地雷）
@@ -585,4 +590,53 @@ void Widget::showExplosionEffect(int r, int c)
     btn->setText("💥");
 
     QApplication::processEvents();
+}
+
+void Widget::onHintClicked()
+{
+    if (gameOver || firstClick) {
+        QMessageBox::information(this, "提示", "請先開始遊戲!");
+        return;
+    }
+    
+    performHint();
+}
+
+void Widget::performHint()
+{
+    // 找出當前層所有未揭露且非地雷的格子
+    QVector<QPair<int,int>> safeCells;
+    
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            Cell &cell = board[currentLayer][r][c];
+            if (!cell.revealed && !cell.flagged && !cell.isMine) {
+                safeCells.append({r, c});
+            }
+        }
+    }
+    
+    if (safeCells.isEmpty()) {
+        QMessageBox::information(this, "提示", "當前層已無安全格可揭露!");
+        return;
+    }
+    
+    // 隨機選擇一個安全格
+    int idx = QRandomGenerator::global()->bounded(safeCells.size());
+    int r = safeCells[idx].first;
+    int c = safeCells[idx].second;
+    
+    // 模擬點擊
+    revealCell(currentLayer, r, c);
+    updateButtonVisual(currentLayer, r, c);
+    checkWinCondition();
+    
+    // 視覺回饋：短暫高亮該格子
+    CellButton *btn = buttonGrid[r][c];
+    if (btn) {
+        btn->setStyleSheet(btn->styleSheet() + " QPushButton { border: 3px solid #00ff00; }");
+        QTimer::singleShot(500, [btn, this, r, c]() {
+            updateButtonVisual(currentLayer, r, c);
+        });
+    }
 }

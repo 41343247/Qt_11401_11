@@ -63,6 +63,7 @@ private slots:
     void prevLayer();                     // 上一層
     void nextLayer();                     // 下一層
     void onTimerTick();                   // 計時器
+    void onHintClicked();                 // 提示按鈕
 private:
     // UI
     QGridLayout *boardLayout;
@@ -73,6 +74,7 @@ private:
     QLabel *mineLabel;
     QLabel *timeLabel;
     QPushButton *newGameBtn;
+    QPushButton *hintBtn;                 // 提示按鈕
     QSpinBox *spinRows;
     QSpinBox *spinCols;
     QSpinBox *spinLayers;
@@ -113,6 +115,7 @@ private:
     void checkWinCondition();
     QColor getLayerColor(int layer, bool revealed) const;
     void showExplosionEffect(int r, int c);
+    void performHint();                   // 執行提示動作
 };
 
 #endif // WIDGET_H
